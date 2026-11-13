@@ -13,3 +13,8 @@ Ibrahima Fall, Souaibou Dieng.
 
 ## Licence
 Contenu rédactionnel — tous droits réservés.
+
+## Captures
+Voir le dossier `images/`.
+
+![capture](images/arch_tp1.png)

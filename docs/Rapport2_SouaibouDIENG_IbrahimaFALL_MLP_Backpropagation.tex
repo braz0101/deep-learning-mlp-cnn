@@ -1,0 +1,556 @@
+% ============================================================
+%  RAPPORT TECHNIQUE N°2 - Deep Learning
+%  Algorithme de Rétropropagation & Réseaux Dense/Convolutif
+%  Auteurs : Souaibou DIENG & Ibrahima FALL
+%  ESP DAKAR - Master 2 SRT - 2025/2026
+% ============================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% ---------- Encodage & Langue ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ---------- Mise en page ----------
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---------- Polices ----------
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Graphiques & Couleurs ----------
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric}
+
+% Palette de couleurs
+\definecolor{espblue}{RGB}{0, 70, 127}
+\definecolor{espgold}{RGB}{204, 153, 0}
+\definecolor{codegray}{RGB}{40, 44, 52}
+\definecolor{codegreen}{RGB}{80, 200, 120}
+\definecolor{codeorange}{RGB}{230, 126, 34}
+\definecolor{codecomment}{RGB}{127, 140, 141}
+\definecolor{codered}{RGB}{231, 76, 60}
+
+% ---------- Tableaux ----------
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{colortbl}
+
+% ---------- Maths ----------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% ---------- Code source ----------
+\usepackage{listings}
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\footnotesize\color{white},
+    keywordstyle=\color{codeorange}\bfseries,
+    stringstyle=\color{codegreen},
+    commentstyle=\color{codecomment}\itshape,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=8pt,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    framesep=5pt,
+    rulecolor=\color{espblue},
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b,
+    literate=
+        {é}{{\'{e}}}1 {è}{{\`{e}}}1 {ê}{{\^{e}}}1 {ë}{{\"e}}1
+        {à}{{\`{a}}}1 {â}{{\^{a}}}1 {î}{{\^i}}1 {ô}{{\^o}}1
+        {ù}{{\`{u}}}1 {û}{{\^{u}}}1 {ç}{{\c{c}}}1
+}
+\lstset{style=pythonstyle}
+
+% ---------- Hyperliens ----------
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    pdftitle={Rapport TP2 - Rétropropagation \& Réseaux Dense/Convolutif},
+    pdfauthor={Souaibou DIENG \& Ibrahima FALL},
+}
+
+% ---------- En-têtes et pieds de page ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{espblue}{\textit{Rétropropagation \& Réseaux Dense/Convolutif}}}
+\fancyhead[R]{\small\textcolor{espblue}{\textit{Master 2 SRT -- ESP Dakar}}}
+\fancyfoot[C]{\textcolor{espblue}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{%
+    \color{espblue}\leaders\hrule height \headrulewidth\hfill}}
+
+% ---------- Boîtes ----------
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{infobox}[1][]{
+    enhanced, breakable,
+    colback=espblue!5, colframe=espblue,
+    boxrule=0.8pt, arc=4pt,
+    fonttitle=\bfseries\color{white},
+    colbacktitle=espblue, #1
+}
+
+\newtcolorbox{mathbox}{
+    enhanced,
+    colback=espgold!8, colframe=espgold,
+    boxrule=0.8pt, arc=4pt,
+}
+
+\newtcolorbox{resultbox}{
+    enhanced,
+    colback=codegreen!8, colframe=codegreen!60!black,
+    boxrule=0.8pt, arc=4pt,
+}
+
+\newtcolorbox{stepbox}[1]{
+    enhanced, breakable,
+    colback=espblue!4, colframe=espblue!35,
+    boxrule=0.6pt, arc=3pt,
+    title={\textbf{#1}},
+    fonttitle=\small\bfseries\color{espblue},
+    colbacktitle=espblue!12,
+    coltitle=espblue,
+}
+
+\newtcolorbox{gradbox}{
+    enhanced,
+    colback=codered!5, colframe=codered!60,
+    boxrule=0.6pt, arc=3pt,
+}
+
+% ---------- Sections personnalisées ----------
+\usepackage{titlesec}
+\titleformat{\section}
+    {\normalfont\Large\bfseries\color{espblue}}
+    {\thesection.}{10pt}{}
+    [\vspace{2pt}{\color{espblue}\titlerule[0.6pt]}]
+\titlespacing{\section}{0pt}{18pt}{10pt}
+
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\color{espblue!80!black}}
+    {\thesubsection}{8pt}{}
+\titlespacing{\subsection}{0pt}{12pt}{6pt}
+
+\titleformat{\paragraph}[runin]
+    {\normalfont\normalsize\bfseries\color{espblue!70!black}}
+    {}{0pt}{}[\ ---]
+
+% ---------- Divers ----------
+\usepackage{enumitem}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, labelsep=period}
+
+% ============================================================
+%  DÉBUT DU DOCUMENT
+% ============================================================
+\begin{document}
+
+% ============================================================
+%  PAGE DE GARDE
+% ============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.3cm}
+
+    {\color{espblue}\rule{\linewidth}{3pt}}\\[0.5cm]
+
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        {\small\bfseries RÉPUBLIQUE DU SÉNÉGAL}\\[3pt]
+        {\footnotesize Un Peuple – Un But – Une Foi}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        \includegraphics[width=2.8cm]{logo_esp.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        {\small\bfseries UNIVERSITÉ CHEIKH ANTA DIOP}\\[3pt]
+        {\footnotesize DE DAKAR (UCAD)}
+    \end{minipage}
+
+    \vspace{0.5cm}
+    {\color{espblue}\rule{\linewidth}{1pt}}\\[0.3cm]
+
+    {\large\bfseries\color{espblue} ÉCOLE SUPÉRIEURE POLYTECHNIQUE DE DAKAR}\\[4pt]
+    {\normalsize DÉPARTEMENT DE GÉNIE INFORMATIQUE}\\[2pt]
+    {\normalsize\bfseries MASTER 2 -- SYSTÈMES, RÉSEAUX ET TÉLÉCOMMUNICATIONS}
+
+    \vspace{0.4cm}
+    {\color{espgold}\rule{0.5\linewidth}{2pt}}
+    \vspace{0.3cm}
+
+    {\large\color{espblue!70!black} Module :}\\[3pt]
+    {\Large\bfseries Deep Learning / Traitement d'Images}
+
+    \vspace{0.3cm}
+    {\color{espgold}\rule{0.8\linewidth}{1.5pt}}
+    \vspace{0.3cm}
+
+    % Badge numéro de TP
+    \begin{tcolorbox}[enhanced, width=4cm, colback=espblue, colframe=espblue,
+        arc=20pt, boxrule=0pt, halign=center]
+        {\large\bfseries\color{white} Compte Rendu TD}\\[2pt]
+        {\LARGE\bfseries\color{espgold} N° 2}
+    \end{tcolorbox}
+
+    \vspace{0.3cm}
+
+    {\LARGE\bfseries\color{espblue}
+        Algorithme de Rétropropagation\\[5pt]
+        et Réseaux Dense / Convolutif
+    }
+
+    \vspace{0.3cm}
+    {\color{espgold}\rule{0.8\linewidth}{1.5pt}}
+    \vspace{0.5cm}
+
+    \Large\bfseries Réalisé par :\\[0.4cm]
+    \begin{tabular}{cc}
+        \Large\color{espblue} Souaibou \textsc{Dieng} &
+        \Large\color{espblue} Ibrahima \textsc{Fall} \\
+    \end{tabular}
+
+    \vfill
+
+    \begin{tabular}{rl}
+        \textbf{Classe :}              & Master 2 SRT \\[3pt]
+        \textbf{Encadrant :}           & Dr. Mouhamed Kaba \textsc{Keïta} \\[3pt]
+        \textbf{Année universitaire :} & 2025 -- 2026 \\
+    \end{tabular}
+
+    \vspace{0.4cm}
+    {\color{espblue}\rule{\linewidth}{3pt}}
+\end{titlepage}
+
+% ============================================================
+%  TABLE DES MATIÈRES
+% ============================================================
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+% ============================================================
+%  INTRODUCTION
+% ============================================================
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+L'algorithme de \textbf{rétropropagation du gradient}
+(\textit{Backpropagation}) constitue le moteur de l'apprentissage profond.
+Il permet de mettre à jour les poids d'un réseau de neurones en calculant
+l'influence de chaque paramètre sur l'erreur finale, grâce à la
+\textbf{règle de dérivation en chaîne} (\textit{Chain Rule}).
+
+Ce rapport détaille ce processus à travers deux exercices :
+\begin{enumerate}[leftmargin=2cm, label=\textbf{\arabic{*}.}]
+    \item Un \textbf{réseau dense (MLP 2-2-2)} avec des calculs numériques complets,
+          passe avant et passe arrière.
+    \item Une \textbf{étude théorique} sur la propagation des gradients dans les
+          couches de convolution (CNN).
+\end{enumerate}
+
+% ============================================================
+%  EXERCICE 1 : MLP 2-2-2
+% ============================================================
+\section{Étude d'un Réseau de Neurones Dense (MLP 2-2-2)}
+
+On considère un réseau à deux entrées ($i_1, i_2$), une couche cachée
+($h_1, h_2$) et deux sorties ($o_1, o_2$).
+
+\subsection{Architecture et Paramètres Initiaux}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.72\textwidth]{mlp222.png}
+    \caption{Architecture du MLP 2-2-2 avec poids initiaux et biais.}
+    \label{fig:mlp}
+\end{figure}
+
+\begin{table}[H]
+    \centering
+    \caption{Paramètres initiaux du réseau MLP 2-2-2}
+    \label{tab:params}
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabularx}{0.9\textwidth}{lX}
+        \toprule
+        \rowcolor{espblue!15}
+        \textbf{Paramètre} & \textbf{Valeur} \\
+        \midrule
+        Entrées           & $i_1 = 0.05$,\quad $i_2 = 0.10$ \\
+        Poids couche 1    & $w_1=0.15,\ w_2=0.20,\ w_3=0.25,\ w_4=0.30$ \\
+        Poids couche 2    & $w_5=0.40,\ w_6=0.45,\ w_7=0.50,\ w_8=0.55$ \\
+        Biais             & $b_1 = 0.35$,\quad $b_2 = 0.60$ \\
+        Cibles            & $t_{o1} = 0.01$,\quad $t_{o2} = 0.99$ \\
+        Taux d'apprentissage & $\eta = 0.5$ \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\subsection{Passe Avant (\textit{Forward Pass})}
+
+Nous utilisons la \textbf{fonction d'activation sigmoïde} :
+
+\begin{mathbox}
+\begin{equation}
+    \sigma(z) = \frac{1}{1 + e^{-z}}, \qquad
+    \sigma'(z) = \sigma(z)\,\bigl(1 - \sigma(z)\bigr)
+    \label{eq:sigmoid}
+\end{equation}
+\end{mathbox}
+
+\begin{stepbox}{Étape 1 — Calcul de la couche cachée}
+\begin{align*}
+    net_{h1} &= w_1\,i_1 + w_3\,i_2 + b_1
+               = 0.15(0.05) + 0.25(0.10) + 0.35 = 0.3775 \\
+    out_{h1} &= \sigma(0.3775) \approx \mathbf{0.5933} \\[6pt]
+    net_{h2} &= w_2\,i_1 + w_4\,i_2 + b_1
+               = 0.20(0.05) + 0.30(0.10) + 0.35 = 0.3925 \\
+    out_{h2} &= \sigma(0.3925) \approx \mathbf{0.5969}
+\end{align*}
+\end{stepbox}
+
+\vspace{0.4cm}
+
+\begin{stepbox}{Étape 2 — Calcul de la couche de sortie}
+\begin{align*}
+    net_{o1} &= w_5\,out_{h1} + w_7\,out_{h2} + b_2
+               = 0.40(0.5933) + 0.50(0.5969) + 0.60 = 1.1059 \\
+    out_{o1} &= \sigma(1.1059) \approx \mathbf{0.7514} \\[6pt]
+    net_{o2} &= w_6\,out_{h1} + w_8\,out_{h2} + b_2
+               = 0.45(0.5933) + 0.55(0.5969) + 0.60 = 1.2249 \\
+    out_{o2} &= \sigma(1.2249) \approx \mathbf{0.7729}
+\end{align*}
+\end{stepbox}
+
+\subsection{Calcul de l'Erreur Totale}
+
+L'erreur est mesurée via l'\textbf{Erreur Quadratique Moyenne (MSE)} :
+
+\begin{mathbox}
+\begin{equation}
+    E_{\text{total}} = \sum \frac{1}{2}(t - out)^2
+    \label{eq:mse}
+\end{equation}
+\end{mathbox}
+
+\begin{table}[H]
+    \centering
+    \caption{Décomposition de l'erreur totale}
+    \label{tab:erreur}
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{lcc}
+        \toprule
+        \rowcolor{espblue!15}
+        \textbf{Sortie} & \textbf{Formule} & \textbf{Valeur} \\
+        \midrule
+        $E_{o1}$ & $\frac{1}{2}(0.01 - 0.7514)^2$ & $0.2748$ \\
+        $E_{o2}$ & $\frac{1}{2}(0.99 - 0.7729)^2$ & $0.0236$ \\
+        \midrule
+        \rowcolor{codegreen!15}
+        $E_{\text{total}}$ & $E_{o1} + E_{o2}$ & $\mathbf{0.2984}$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Passe Arrière (\textit{Backward Pass}) et Mise à Jour}
+
+La règle générale de mise à jour des poids est :
+
+\begin{mathbox}
+\begin{equation}
+    w_{\text{new}} = w_{\text{old}} - \eta\,\frac{\partial E_{\text{total}}}{\partial w}
+    \label{eq:update}
+\end{equation}
+\end{mathbox}
+
+\begin{stepbox}{Mise à jour de $w_8$ — Couche de sortie}
+Par la règle de la chaîne :
+\[
+    \frac{\partial E_{\text{total}}}{\partial w_8}
+    = \underbrace{\frac{\partial E_{\text{total}}}{\partial out_{o2}}}_{-(t_{o2}-out_{o2})}
+    \cdot \underbrace{\frac{\partial out_{o2}}{\partial net_{o2}}}_{out_{o2}(1-out_{o2})}
+    \cdot \underbrace{\frac{\partial net_{o2}}{\partial w_8}}_{out_{h2}}
+\]
+\begin{align*}
+    \frac{\partial E_{\text{total}}}{\partial out_{o2}}
+        &= -(0.99 - 0.7729) = -0.2171 \\
+    \frac{\partial out_{o2}}{\partial net_{o2}}
+        &= 0.7729\,(1 - 0.7729) = 0.1755 \\
+    \frac{\partial net_{o2}}{\partial w_8}
+        &= out_{h2} = 0.5969 \\[4pt]
+    \frac{\partial E_{\text{total}}}{\partial w_8}
+        &\approx -0.0227 \\[4pt]
+    w_8^{+} &= 0.55 - 0.5\,(-0.0227) = \mathbf{0.5613}
+\end{align*}
+\end{stepbox}
+
+\vspace{0.4cm}
+
+\begin{stepbox}{Mise à jour de $w_4$ — Couche cachée}
+Le neurone $h_2$ contribue simultanément à $o_1$ et $o_2$, ce qui complexifie le calcul :
+\[
+    \frac{\partial E_{\text{total}}}{\partial out_{h2}}
+    = \frac{\partial E_{o1}}{\partial out_{h2}}
+    + \frac{\partial E_{o2}}{\partial out_{h2}}
+\]
+\begin{align*}
+    \frac{\partial E_{\text{total}}}{\partial w_4}
+        &\approx 0.0008 \\[4pt]
+    w_4^{+} &= 0.30 - 0.5\,(0.0008) \approx \mathbf{0.2996}
+\end{align*}
+\end{stepbox}
+
+\begin{resultbox}
+\textbf{Synthèse :} Les nouveaux poids $w_8^+ = 0.5613$ et $w_4^+ = 0.2996$
+illustrent que la rétropropagation ajuste chaque poids \textbf{proportionnellement
+à sa contribution à l'erreur}, avec un pas contrôlé par $\eta$.
+\end{resultbox}
+
+% ============================================================
+%  SECTION 3 : CODE PYTHON
+% ============================================================
+\newpage
+\section{Validation par l'Implémentation Python}
+
+Le script suivant (NumPy) vérifie les calculs manuels de la passe avant
+et de la mise à jour de $w_8$ pour la première itération.
+
+\begin{lstlisting}[language=Python, caption={Simulation du Backpropagation -- MLP 2-2-2}, label=lst:backprop]
+import numpy as np
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
+
+def sigmoid_derivative(x):
+    return x * (1 - x)
+
+# --- Donnees initiales ---
+i1, i2 = 0.05, 0.10
+t1, t2 = 0.01, 0.99
+eta    = 0.5
+
+# --- Poids et biais ---
+w1, w2, w3, w4 = 0.15, 0.20, 0.25, 0.30
+w5, w6, w7, w8 = 0.40, 0.45, 0.50, 0.55
+b1, b2         = 0.35, 0.60
+
+# === PASSE AVANT ===
+h1 = sigmoid(w1*i1 + w3*i2 + b1)   # out_h1
+h2 = sigmoid(w2*i1 + w4*i2 + b1)   # out_h2
+o1 = sigmoid(w5*h1 + w7*h2 + b2)   # out_o1
+o2 = sigmoid(w6*h1 + w8*h2 + b2)   # out_o2
+
+print("=== Passe Avant ===")
+print(f"out_h1 = {h1:.4f}  |  out_h2 = {h2:.4f}")
+print(f"out_o1 = {o1:.4f}  |  out_o2 = {o2:.4f}")
+E_total = 0.5*(t1-o1)**2 + 0.5*(t2-o2)**2
+print(f"E_total = {E_total:.4f}")
+
+# === PASSE ARRIERE (w8) ===
+dE_dout_o2  = -(t2 - o2)
+dout_dnet   = sigmoid_derivative(o2)
+dnet_dw8    = h2
+
+grad_w8 = dE_dout_o2 * dout_dnet * dnet_dw8
+w8_new  = w8 - eta * grad_w8
+
+print("\n=== Passe Arriere ===")
+print(f"Gradient w8 = {grad_w8:.4f}")
+print(f"w8 : {w8:.4f}  ->  {w8_new:.4f}")
+\end{lstlisting}
+
+% ============================================================
+%  EXERCICE 2 : CONVOLUTION
+% ============================================================
+\section{Convolution et Rétropropagation}
+
+Cette partie analyse comment les gradients circulent au sein d'une
+\textbf{couche de convolution} (CNN).
+
+\subsection{Définition de la Sortie d'une Couche de Convolution}
+
+Un élément de la carte de sortie $O$ est calculé par :
+
+\begin{mathbox}
+\begin{equation}
+    O_{ij} = \sum_{p,\,q} X_{i+p,\,j+q} \cdot F_{pq}
+    \label{eq:conv}
+\end{equation}
+où $X$ est l'image d'entrée et $F$ le filtre (noyau de convolution).
+\end{mathbox}
+
+\subsection{Gradients de la Perte $L$}
+
+\begin{stepbox}{Gradient par rapport au filtre $F$}
+\begin{equation}
+    \frac{\partial L}{\partial F_{pq}}
+    = \sum_{i,j} \frac{\partial L}{\partial O_{ij}} \cdot X_{i+p,\,j+q}
+    \label{eq:grad_F}
+\end{equation}
+Le gradient par rapport au filtre est une \textbf{convolution} entre l'entrée $X$
+et le gradient de la sortie $\delta O$.
+\end{stepbox}
+
+\vspace{0.4cm}
+
+\begin{stepbox}{Gradient par rapport à l'entrée $X$}
+La contribution de chaque élément $X_{mn}$ à la sortie dépend de sa position
+sous le filtre. Le gradient s'écrit :
+\begin{equation}
+    \frac{\partial L}{\partial X_{mn}}
+    = \sum_{i,j} \frac{\partial L}{\partial O_{ij}} \cdot F_{m-i,\,n-j}
+    \label{eq:grad_X}
+\end{equation}
+Ce calcul correspond à une \textbf{corrélation croisée} entre le gradient de la
+sortie et le filtre \textbf{inversé} (rotation de 180°).
+\end{stepbox}
+
+\begin{infobox}[title={Propriété fondamentale de la rétropropagation en CNN}]
+Les deux opérations clés du backward pass en convolution sont :
+\begin{itemize}[noitemsep]
+    \item \textbf{Mise à jour du filtre} : convolution entre $X$ et $\delta O$
+    \item \textbf{Propagation du gradient} : corrélation entre $\delta O$ et $F^{\text{rot180}}$
+\end{itemize}
+Ces propriétés permettent de conserver la \textbf{structure spatiale} des images
+lors de l'apprentissage, ce qui est la force fondamentale des CNN.
+\end{infobox}
+
+% ============================================================
+%  CONCLUSION
+% ============================================================
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+Ce rapport a démontré la puissance et l'élégance de la \textbf{règle de
+dérivation en chaîne} (\textit{Chain Rule}) appliquée aux réseaux de neurones.
+
+\begin{resultbox}
+\textbf{Deux leçons essentielles :}
+\begin{enumerate}[noitemsep, leftmargin=1.5cm]
+    \item Dans un \textbf{réseau dense}, chaque poids est ajusté proportionnellement
+          à sa contribution à l'erreur, remontée couche par couche.
+    \item Dans une \textbf{couche convolutive}, l'apprentissage repose sur des
+          opérations de corrélation qui préservent les propriétés spatiales des images.
+\end{enumerate}
+Ces mécanismes constituent les piliers des architectures modernes comme
+\textbf{ResNet} ou les \textbf{Transformers}.
+\end{resultbox}
+
+\end{document}

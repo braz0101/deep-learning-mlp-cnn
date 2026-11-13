@@ -1,0 +1,499 @@
+% ============================================================
+%  RAPPORT TECHNIQUE N°1 - Deep Learning
+%  Architecture des Réseaux de Neurones & Problème XOR
+%  Auteurs : Souaibou DIENG & Ibrahima FALL
+%  ESP DAKAR - Master 2 SRT - 2025/2026
+% ============================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% ---------- Encodage & Langue ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ---------- Mise en page ----------
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---------- Polices ----------
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Graphiques & Couleurs ----------
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, shapes.geometric}
+
+% Palette de couleurs (identique au rapport Fine-Tuning)
+\definecolor{espblue}{RGB}{0, 70, 127}
+\definecolor{espgold}{RGB}{204, 153, 0}
+\definecolor{codegray}{RGB}{40, 44, 52}
+\definecolor{codegreen}{RGB}{80, 200, 120}
+\definecolor{codeorange}{RGB}{230, 126, 34}
+\definecolor{codecomment}{RGB}{127, 140, 141}
+\definecolor{backcolour}{RGB}{242, 244, 246}
+
+% ---------- Tableaux ----------
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{colortbl}
+
+% ---------- Maths ----------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% ---------- Code source ----------
+\usepackage{listings}
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\footnotesize\color{white},
+    keywordstyle=\color{codeorange}\bfseries,
+    stringstyle=\color{codegreen},
+    commentstyle=\color{codecomment}\itshape,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=8pt,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    framesep=5pt,
+    rulecolor=\color{espblue},
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b,
+    literate=
+        {é}{{\'{e}}}1 {è}{{\`{e}}}1 {ê}{{\^{e}}}1 {ë}{{\"e}}1
+        {à}{{\`{a}}}1 {â}{{\^{a}}}1 {î}{{\^i}}1 {ô}{{\^o}}1
+        {ù}{{\`{u}}}1 {û}{{\^{u}}}1 {ç}{{\c{c}}}1
+}
+\lstset{style=pythonstyle}
+
+% ---------- Hyperliens ----------
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    pdftitle={Rapport TP1 - Architecture Réseaux de Neurones & XOR},
+    pdfauthor={Souaibou DIENG \& Ibrahima FALL},
+    pdfsubject={Deep Learning - Master 2 SRT},
+}
+
+% ---------- En-têtes et pieds de page ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{espblue}{\textit{Architecture Réseaux de Neurones \& Problème XOR}}}
+\fancyhead[R]{\small\textcolor{espblue}{\textit{Master 2 SRT -- ESP Dakar}}}
+\fancyfoot[C]{\textcolor{espblue}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{%
+    \color{espblue}\leaders\hrule height \headrulewidth\hfill}}
+
+% ---------- Boîtes ----------
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{infobox}[1][]{
+    enhanced, breakable,
+    colback=espblue!5,
+    colframe=espblue,
+    boxrule=0.8pt,
+    arc=4pt,
+    fonttitle=\bfseries\color{white},
+    colbacktitle=espblue,
+    #1
+}
+
+\newtcolorbox{mathbox}{
+    enhanced,
+    colback=espgold!8,
+    colframe=espgold,
+    boxrule=0.8pt,
+    arc=4pt,
+}
+
+\newtcolorbox{resultbox}{
+    enhanced,
+    colback=codegreen!8,
+    colframe=codegreen!60!black,
+    boxrule=0.8pt,
+    arc=4pt,
+}
+
+\newtcolorbox{casebox}[1]{
+    enhanced,
+    colback=espblue!4,
+    colframe=espblue!40,
+    boxrule=0.6pt,
+    arc=3pt,
+    title={\textbf{Cas #1}},
+    fonttitle=\small\bfseries\color{espblue},
+    colbacktitle=espblue!15,
+    coltitle=espblue,
+}
+
+% ---------- Sections personnalisées ----------
+\usepackage{titlesec}
+\titleformat{\section}
+    {\normalfont\Large\bfseries\color{espblue}}
+    {\thesection.}{10pt}{}
+    [\vspace{2pt}{\color{espblue}\titlerule[0.6pt]}]
+\titlespacing{\section}{0pt}{18pt}{10pt}
+
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\color{espblue!80!black}}
+    {\thesubsection}{8pt}{}
+\titlespacing{\subsection}{0pt}{12pt}{6pt}
+
+\titleformat{\paragraph}[runin]
+    {\normalfont\normalsize\bfseries\color{espblue!70!black}}
+    {}{0pt}{}[\ ---]
+
+% ---------- Divers ----------
+\usepackage{enumitem}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, labelsep=period}
+
+% ============================================================
+%  DÉBUT DU DOCUMENT
+% ============================================================
+\begin{document}
+
+% ============================================================
+%  PAGE DE GARDE
+% ============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.3cm}
+
+    {\color{espblue}\rule{\linewidth}{3pt}}\\[0.5cm]
+
+    % Entête institutionnel avec logo centré
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        {\small\bfseries RÉPUBLIQUE DU SÉNÉGAL}\\[3pt]
+        {\footnotesize Un Peuple – Un But – Une Foi}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        \includegraphics[width=2.8cm]{logo_esp.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        {\small\bfseries UNIVERSITÉ CHEIKH ANTA DIOP}\\[3pt]
+        {\footnotesize DE DAKAR (UCAD)}
+    \end{minipage}
+
+    \vspace{0.5cm}
+    {\color{espblue}\rule{\linewidth}{1pt}}\\[0.3cm]
+
+    {\large\bfseries\color{espblue} ÉCOLE SUPÉRIEURE POLYTECHNIQUE DE DAKAR}\\[4pt]
+    {\normalsize DÉPARTEMENT DE GÉNIE INFORMATIQUE}\\[2pt]
+    {\normalsize\bfseries MASTER 2 -- SYSTÈMES, RÉSEAUX ET TÉLÉCOMMUNICATIONS}
+
+    \vspace{0.4cm}
+    {\color{espgold}\rule{0.5\linewidth}{2pt}}
+    \vspace{0.3cm}
+
+    {\large\color{espblue!70!black} Module :}\\[3pt]
+    {\Large\bfseries Deep Learning / Traitement d'Images}
+
+    \vspace{0.3cm}
+    {\color{espgold}\rule{0.8\linewidth}{1.5pt}}
+    \vspace{0.3cm}
+
+    % Badge numéro de TP
+    \begin{tcolorbox}[enhanced, width=4cm, colback=espblue, colframe=espblue,
+        arc=20pt, boxrule=0pt, halign=center]
+        {\large\bfseries\color{white} Rapport Technique}\\[2pt]
+        {\LARGE\bfseries\color{espgold} N° 1}
+    \end{tcolorbox}
+
+    \vspace{0.3cm}
+
+    {\LARGE\bfseries\color{espblue}
+        Architecture des Réseaux de Neurones\\[5pt]
+        et Problème du XOR
+    }
+
+    \vspace{0.3cm}
+    {\color{espgold}\rule{0.8\linewidth}{1.5pt}}
+    \vspace{0.5cm}
+
+    \Large\bfseries Réalisé par :\\[0.4cm]
+    \begin{tabular}{cc}
+        \Large\color{espblue} Souaibou \textsc{Dieng} &
+        \Large\color{espblue} Ibrahima \textsc{Fall} \\
+    \end{tabular}
+
+    \vfill
+
+    \begin{tabular}{rl}
+        \textbf{Classe :}              & Master 2 SRT \\[3pt]
+        \textbf{Encadrant :}           & Dr. Mouhamed Kaba \textsc{Keïta} \\[3pt]
+        \textbf{Année universitaire :} & 2025 -- 2026 \\
+    \end{tabular}
+
+    \vspace{0.4cm}
+    {\color{espblue}\rule{\linewidth}{3pt}}
+\end{titlepage}
+
+% ============================================================
+%  TABLE DES MATIÈRES
+% ============================================================
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+% ============================================================
+%  INTRODUCTION
+% ============================================================
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+L'apprentissage profond repose sur la capacité des neurones artificiels à modéliser
+des fonctions complexes. Cependant, les modèles simples comme le perceptron de Rosenblatt
+présentent des limites théoriques majeures, notamment l'impossibilité de résoudre des
+problèmes qui ne sont pas \textbf{linéairement séparables}.
+
+Ce rapport traite des fondamentaux du Deep Learning à travers l'étude du problème logique
+\textbf{XOR} (\textit{OU exclusif}). Nous détaillerons l'architecture d'un
+\textbf{Perceptron Multicouche (MLP)}, les calculs de propagation avant
+(\textit{forward propagation}), et nous proposerons une implémentation logicielle
+permettant de valider la théorie.
+
+% ============================================================
+%  SECTION 1 : MODÉLISATION
+% ============================================================
+\section{Modélisation et Séparabilité Linéaire}
+
+\subsection{Le Neurone Artificiel}
+
+Un neurone artificiel effectue une combinaison linéaire de ses entrées pondérées,
+suivie de l'application d'une \textbf{fonction d'activation} $f$ :
+
+\begin{mathbox}
+\begin{equation}
+    y = f\!\left(\sum_{i=1}^{n} w_i\, x_i + b\right)
+    \label{eq:neuron}
+\end{equation}
+où $x_i$ sont les entrées, $w_i$ les poids synaptiques, $b$ le biais et $f$ la
+fonction d'activation.
+\end{mathbox}
+
+\subsection{Limites du Perceptron Simple : le cas du XOR}
+
+Le XOR est une fonction logique dont la table de vérité est la suivante :
+
+\begin{table}[H]
+    \centering
+    \caption{Table de vérité du XOR}
+    \label{tab:xor}
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{ccc}
+        \toprule
+        \rowcolor{espblue!15}
+        \textbf{Entrée $x_1$} & \textbf{Entrée $x_2$} & \textbf{Sortie attendue} \\
+        \midrule
+        0 & 0 & 0 \\
+        0 & 1 & \cellcolor{codegreen!20}\textbf{1} \\
+        1 & 0 & \cellcolor{codegreen!20}\textbf{1} \\
+        1 & 1 & 0 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\begin{infobox}[title={Pourquoi un perceptron simple ne suffit pas ?}]
+Contrairement aux fonctions AND ou OR, il est \textbf{impossible} de tracer une seule
+droite (hyperplan) séparant les points de sortie 0 des points de sortie 1 dans l'espace
+$\mathbb{R}^2$. Cette \textbf{non-linéarité} impose l'utilisation d'au moins une
+\textbf{couche cachée}.
+\end{infobox}
+
+% ============================================================
+%  SECTION 2 : ARCHITECTURE MLP
+% ============================================================
+\section{Architecture du Perceptron Multicouche}
+
+Pour résoudre le XOR, nous utilisons un réseau composé de :
+\begin{itemize}[leftmargin=1.8cm]
+    \item une \textbf{couche d'entrée} : 2 neurones ($x_1$, $x_2$)
+    \item une \textbf{couche cachée} : 2 neurones ($N_1$, $N_2$)
+    \item une \textbf{couche de sortie} : 1 neurone ($y$)
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.82\textwidth]{arch_tp1.png}
+    \caption{Architecture du MLP proposée pour le XOR avec poids et biais configurés.}
+    \label{fig:xor_arch}
+\end{figure}
+
+\subsection{Paramétrage du Réseau}
+
+Selon l'architecture de la Figure~\ref{fig:xor_arch}, les paramètres sont fixés comme suit :
+
+\begin{table}[H]
+    \centering
+    \caption{Paramètres du réseau MLP pour le XOR}
+    \label{tab:params}
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabularx}{0.85\textwidth}{lccX}
+        \toprule
+        \rowcolor{espblue!15}
+        \textbf{Neurone} & \textbf{Poids $w$} & \textbf{Biais $b$} & \textbf{Fonction} \\
+        \midrule
+        $N_1$ (couche cachée)  & $[1,\; 1]$   & $-1.5$ & Heaviside \\
+        $N_2$ (couche cachée)  & $[1,\; 1]$   & $-0.5$ & Heaviside \\
+        $y$\; (sortie)         & $[-1,\; 1]$  & $-0.5$ & Heaviside \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+Nous utilisons la \textbf{fonction à seuil de Heaviside} comme fonction d'activation :
+
+\begin{mathbox}
+\begin{equation}
+    f(z) = \begin{cases} 1 & \text{si } z \geq 0 \\ 0 & \text{sinon} \end{cases}
+    \label{eq:heaviside}
+\end{equation}
+\end{mathbox}
+
+% ============================================================
+%  SECTION 3 : VÉRIFICATION MATHÉMATIQUE
+% ============================================================
+\section{Vérification des Cas d'Usage}
+
+Démontrons par le calcul que cette configuration résout effectivement le XOR
+pour les quatre combinaisons d'entrées possibles.
+
+% --- Cas (0,0) ---
+\begin{casebox}{$(x_1, x_2) = (0, 0)$ — Sortie attendue : \textbf{0}}
+\begin{align*}
+    N_1 &= f\!\left(0 \cdot 1 + 0 \cdot 1 - 1.5\right) = f(-1.5) = \mathbf{0} \\
+    N_2 &= f\!\left(0 \cdot 1 + 0 \cdot 1 - 0.5\right) = f(-0.5) = \mathbf{0} \\
+    y   &= f\!\left(0 \cdot (-1) + 0 \cdot 1 - 0.5\right) = f(-0.5) = \mathbf{0} \checkmark
+\end{align*}
+\end{casebox}
+
+\vspace{0.5cm}
+
+% --- Cas (1,0) ---
+\begin{casebox}{$(x_1, x_2) = (1, 0)$ — Sortie attendue : \textbf{1}}
+\begin{align*}
+    N_1 &= f\!\left(1 \cdot 1 + 0 \cdot 1 - 1.5\right) = f(-0.5) = \mathbf{0} \\
+    N_2 &= f\!\left(1 \cdot 1 + 0 \cdot 1 - 0.5\right) = f(+0.5) = \mathbf{1} \\
+    y   &= f\!\left(0 \cdot (-1) + 1 \cdot 1 - 0.5\right) = f(+0.5) = \mathbf{1} \checkmark
+\end{align*}
+\end{casebox}
+
+\vspace{0.5cm}
+
+% --- Cas (0,1) ---
+\begin{casebox}{$(x_1, x_2) = (0, 1)$ — Sortie attendue : \textbf{1}}
+\begin{align*}
+    N_1 &= f\!\left(0 \cdot 1 + 1 \cdot 1 - 1.5\right) = f(-0.5) = \mathbf{0} \\
+    N_2 &= f\!\left(0 \cdot 1 + 1 \cdot 1 - 0.5\right) = f(+0.5) = \mathbf{1} \\
+    y   &= f\!\left(0 \cdot (-1) + 1 \cdot 1 - 0.5\right) = f(+0.5) = \mathbf{1} \checkmark
+\end{align*}
+\end{casebox}
+
+\vspace{0.5cm}
+
+% --- Cas (1,1) ---
+\begin{casebox}{$(x_1, x_2) = (1, 1)$ — Sortie attendue : \textbf{0}}
+\begin{align*}
+    N_1 &= f\!\left(1 \cdot 1 + 1 \cdot 1 - 1.5\right) = f(+0.5) = \mathbf{1} \\
+    N_2 &= f\!\left(1 \cdot 1 + 1 \cdot 1 - 0.5\right) = f(+1.5) = \mathbf{1} \\
+    y   &= f\!\left(1 \cdot (-1) + 1 \cdot 1 - 0.5\right) = f(-0.5) = \mathbf{0} \checkmark
+\end{align*}
+\end{casebox}
+
+\vspace{0.6cm}
+\begin{resultbox}
+\textbf{Résultat :} Les quatre cas de la table de vérité du XOR sont correctement
+résolus par ce réseau MLP à deux neurones cachés.
+\end{resultbox}
+
+% ============================================================
+%  SECTION 4 : IMPLÉMENTATION PYTHON
+% ============================================================
+\section{Implémentation Logicielle}
+
+Le code suivant implémente la logique du réseau XOR en Python avec la bibliothèque
+\texttt{numpy}, en respectant exactement les poids et biais définis à la
+Section~\ref{tab:params}.
+
+\begin{lstlisting}[language=Python, caption={Simulateur du réseau XOR -- Python/NumPy}, label=lst:xor]
+import numpy as np
+
+def step_function(x):
+    """Fonction de Heaviside : retourne 1 si x >= 0, sinon 0."""
+    return 1 if x >= 0 else 0
+
+def xor_network(x1, x2):
+    # --- Couche cachee ---
+    n1 = step_function(x1 * 1 + x2 * 1 - 1.5)  # N1 : AND approxime
+    n2 = step_function(x1 * 1 + x2 * 1 - 0.5)  # N2 : OR
+
+    # --- Couche de sortie ---
+    y = step_function(n1 * (-1) + n2 * 1 - 0.5) # XOR = OR AND NOT(AND)
+    return y
+
+# Verification sur tous les cas
+inputs = [(0, 0), (0, 1), (1, 0), (1, 1)]
+expected = [0, 1, 1, 0]
+
+print(f"{'X1':>4} {'X2':>4} | {'Attendu':>8} {'Obtenu':>8} {'OK':>4}")
+print("-" * 36)
+for (x1, x2), exp in zip(inputs, expected):
+    res = xor_network(x1, x2)
+    ok  = "V" if res == exp else "X"
+    print(f"{x1:>4} {x2:>4} | {exp:>8} {res:>8} {ok:>4}")
+\end{lstlisting}
+
+La sortie attendue du programme est la suivante :
+
+\begin{table}[H]
+    \centering
+    \caption{Résultats d'exécution du simulateur Python}
+    \label{tab:results}
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{ccccc}
+        \toprule
+        \rowcolor{espblue!15}
+        \textbf{$x_1$} & \textbf{$x_2$} & \textbf{Attendu} & \textbf{Obtenu} & \textbf{Statut} \\
+        \midrule
+        0 & 0 & 0 & 0 & \textcolor{codegreen!60!black}{\textbf{OK}} \\
+        0 & 1 & 1 & 1 & \textcolor{codegreen!60!black}{\textbf{OK}} \\
+        1 & 0 & 1 & 1 & \textcolor{codegreen!60!black}{\textbf{OK}} \\
+        1 & 1 & 0 & 0 & \textcolor{codegreen!60!black}{\textbf{OK}} \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% ============================================================
+%  CONCLUSION
+% ============================================================
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+L'étude du problème XOR démontre qu'une architecture à plusieurs couches est
+\textbf{indispensable} pour traiter des données non linéairement séparables.
+En superposant des neurones simples, le réseau est capable de créer des
+\textbf{frontières de décision complexes}.
+
+\begin{resultbox}
+Ce principe constitue la base du Deep Learning moderne : la capacité de
+\textbf{transformer et projeter les données} dans de nouveaux espaces représentatifs
+où la classification linéaire devient possible. C'est cette propriété que les
+architectures profondes (CNN, Transformers) exploitent à très grande échelle.
+\end{resultbox}
+
+\end{document}

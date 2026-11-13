@@ -1,0 +1,568 @@
+% ============================================================
+%  RAPPORT TECHNIQUE N°3 - Deep Learning
+%  Backpropagation dans la Couche de Convolution
+%  Auteurs : Souaibou DIENG & Ibrahima FALL
+%  ESP DAKAR - Master 2 SRT - 2025/2026
+% ============================================================
+
+\documentclass[12pt, a4paper]{article}
+
+% ---------- Encodage & Langue ----------
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+
+% ---------- Mise en page ----------
+\usepackage[top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\onehalfspacing
+
+% ---------- Polices ----------
+\usepackage{lmodern}
+\usepackage{microtype}
+
+% ---------- Graphiques & Couleurs ----------
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage{tikz}
+\usetikzlibrary{matrix, arrows.meta, positioning, fit, backgrounds}
+
+% Palette de couleurs
+\definecolor{espblue}{RGB}{0, 70, 127}
+\definecolor{espgold}{RGB}{204, 153, 0}
+\definecolor{codegray}{RGB}{40, 44, 52}
+\definecolor{codegreen}{RGB}{80, 200, 120}
+\definecolor{codeorange}{RGB}{230, 126, 34}
+\definecolor{codecomment}{RGB}{127, 140, 141}
+\definecolor{codered}{RGB}{231, 76, 60}
+\definecolor{cellblue}{RGB}{219, 234, 254}
+\definecolor{cellgold}{RGB}{254, 243, 199}
+\definecolor{cellgreen}{RGB}{209, 250, 229}
+
+% ---------- Tableaux ----------
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{array}
+\usepackage{colortbl}
+\usepackage{nicematrix}
+
+% ---------- Maths ----------
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+
+% ---------- Code source ----------
+\usepackage{listings}
+\lstdefinestyle{pythonstyle}{
+    backgroundcolor=\color{codegray},
+    basicstyle=\ttfamily\footnotesize\color{white},
+    keywordstyle=\color{codeorange}\bfseries,
+    stringstyle=\color{codegreen},
+    commentstyle=\color{codecomment}\itshape,
+    numberstyle=\tiny\color{gray},
+    numbers=left,
+    numbersep=8pt,
+    breaklines=true,
+    breakatwhitespace=true,
+    frame=single,
+    framesep=5pt,
+    rulecolor=\color{espblue},
+    showstringspaces=false,
+    tabsize=4,
+    captionpos=b,
+    literate=
+        {é}{{\'{e}}}1 {è}{{\`{e}}}1 {ê}{{\^{e}}}1 {ë}{{\"e}}1
+        {à}{{\`{a}}}1 {â}{{\^{a}}}1 {î}{{\^i}}1 {ô}{{\^o}}1
+        {ù}{{\`{u}}}1 {û}{{\^{u}}}1 {ç}{{\c{c}}}1
+}
+\lstset{style=pythonstyle}
+
+% ---------- Hyperliens ----------
+\usepackage[hidelinks]{hyperref}
+\hypersetup{
+    pdftitle={Rapport TP3 - Backpropagation dans la couche de convolution},
+    pdfauthor={Souaibou DIENG \& Ibrahima FALL},
+}
+
+% ---------- En-têtes et pieds de page ----------
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{espblue}{\textit{Backpropagation dans la Couche de Convolution}}}
+\fancyhead[R]{\small\textcolor{espblue}{\textit{Master 2 SRT -- ESP Dakar}}}
+\fancyfoot[C]{\textcolor{espblue}{\thepage}}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\headrule}{\hbox to\headwidth{%
+    \color{espblue}\leaders\hrule height \headrulewidth\hfill}}
+
+% ---------- Boîtes ----------
+\usepackage{tcolorbox}
+\tcbuselibrary{skins, breakable}
+
+\newtcolorbox{infobox}[1][]{
+    enhanced, breakable,
+    colback=espblue!5, colframe=espblue,
+    boxrule=0.8pt, arc=4pt,
+    fonttitle=\bfseries\color{white},
+    colbacktitle=espblue, #1
+}
+
+\newtcolorbox{mathbox}{
+    enhanced,
+    colback=espgold!8, colframe=espgold,
+    boxrule=0.8pt, arc=4pt,
+}
+
+\newtcolorbox{resultbox}{
+    enhanced,
+    colback=codegreen!8, colframe=codegreen!60!black,
+    boxrule=0.8pt, arc=4pt,
+}
+
+\newtcolorbox{stepbox}[1]{
+    enhanced, breakable,
+    colback=espblue!4, colframe=espblue!35,
+    boxrule=0.6pt, arc=3pt,
+    title={\textbf{#1}},
+    fonttitle=\small\bfseries\color{espblue},
+    colbacktitle=espblue!12,
+    coltitle=espblue,
+}
+
+\newtcolorbox{propbox}{
+    enhanced,
+    colback=codered!5, colframe=codered!50,
+    boxrule=0.6pt, arc=3pt,
+}
+
+% ---------- Sections personnalisées ----------
+\usepackage{titlesec}
+\titleformat{\section}
+    {\normalfont\Large\bfseries\color{espblue}}
+    {\thesection.}{10pt}{}
+    [\vspace{2pt}{\color{espblue}\titlerule[0.6pt]}]
+\titlespacing{\section}{0pt}{18pt}{10pt}
+
+\titleformat{\subsection}
+    {\normalfont\large\bfseries\color{espblue!80!black}}
+    {\thesubsection}{8pt}{}
+\titlespacing{\subsection}{0pt}{12pt}{6pt}
+
+% ---------- Divers ----------
+\usepackage{enumitem}
+\usepackage{caption}
+\captionsetup{font=small, labelfont=bf, labelsep=period}
+
+% ============================================================
+%  DÉBUT DU DOCUMENT
+% ============================================================
+\begin{document}
+
+% ============================================================
+%  PAGE DE GARDE
+% ============================================================
+\begin{titlepage}
+    \centering
+    \vspace*{0.3cm}
+
+    {\color{espblue}\rule{\linewidth}{3pt}}\\[0.5cm]
+
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        {\small\bfseries RÉPUBLIQUE DU SÉNÉGAL}\\[3pt]
+        {\footnotesize Un Peuple – Un But – Une Foi}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        \includegraphics[width=2.8cm]{logo_esp.png}
+    \end{minipage}
+    \hfill
+    \begin{minipage}[c]{0.30\textwidth}
+        \centering
+        {\small\bfseries UNIVERSITÉ CHEIKH ANTA DIOP}\\[3pt]
+        {\footnotesize DE DAKAR (UCAD)}
+    \end{minipage}
+
+    \vspace{0.5cm}
+    {\color{espblue}\rule{\linewidth}{1pt}}\\[0.3cm]
+
+    {\large\bfseries\color{espblue} ÉCOLE SUPÉRIEURE POLYTECHNIQUE DE DAKAR}\\[4pt]
+    {\normalsize DÉPARTEMENT DE GÉNIE INFORMATIQUE}\\[2pt]
+    {\normalsize\bfseries MASTER 2 -- SYSTÈMES, RÉSEAUX ET TÉLÉCOMMUNICATIONS}
+
+    \vspace{0.4cm}
+    {\color{espgold}\rule{0.5\linewidth}{2pt}}
+    \vspace{0.3cm}
+
+    {\large\color{espblue!70!black} Module :}\\[3pt]
+    {\Large\bfseries Deep Learning / Traitement d'Images}
+
+    \vspace{0.3cm}
+    {\color{espgold}\rule{0.8\linewidth}{1.5pt}}
+    \vspace{0.3cm}
+
+    % Badge numéro de TP
+    \begin{tcolorbox}[enhanced, width=4cm, colback=espblue, colframe=espblue,
+        arc=20pt, boxrule=0pt, halign=center]
+        {\large\bfseries\color{white} Rapport Technique}\\[2pt]
+        {\LARGE\bfseries\color{espgold} N° 3}
+    \end{tcolorbox}
+
+    \vspace{0.3cm}
+
+    {\LARGE\bfseries\color{espblue}
+        Backpropagation dans la\\[5pt]
+        Couche de Convolution
+    }
+
+    \vspace{0.3cm}
+    {\color{espgold}\rule{0.8\linewidth}{1.5pt}}
+    \vspace{0.5cm}
+
+    \Large\bfseries Réalisé par :\\[0.4cm]
+    \begin{tabular}{cc}
+        \Large\color{espblue} Souaibou \textsc{Dieng} &
+        \Large\color{espblue} Ibrahima \textsc{Fall} \\
+    \end{tabular}
+
+    \vfill
+
+    \begin{tabular}{rl}
+        \textbf{Classe :}              & Master 2 SRT \\[3pt]
+        \textbf{Encadrant :}           & Dr. Mouhamed Kaba \textsc{Keïta} \\[3pt]
+        \textbf{Année universitaire :} & 2025 -- 2026 \\
+    \end{tabular}
+
+    \vspace{0.4cm}
+    {\color{espblue}\rule{\linewidth}{3pt}}
+\end{titlepage}
+
+% ============================================================
+%  TABLE DES MATIÈRES
+% ============================================================
+\tableofcontents
+\thispagestyle{fancy}
+\newpage
+
+% ============================================================
+%  INTRODUCTION
+% ============================================================
+\section*{Introduction}
+\addcontentsline{toc}{section}{Introduction}
+
+L'efficacité des \textbf{réseaux de neurones convolutifs} (CNN) repose sur le
+\textbf{partage de poids}, ce qui leur confère une invariance spatiale essentielle pour
+le traitement des images. Cependant, leur entraînement nécessite une adaptation
+spécifique de l'algorithme de rétropropagation.
+
+Ce rapport analyse \textbf{mathématiquement} comment les gradients de la fonction
+de perte $L$ circulent à travers une opération de convolution entre une entrée $X$
+et un filtre $F$, en distinguant :
+\begin{enumerate}[leftmargin=2cm, label=\textbf{\arabic{*}.}]
+    \item La propagation avant (\textit{Forward Pass}) et les équations de convolution.
+    \item Les gradients locaux par rapport au filtre et à l'entrée.
+    \item La rétropropagation complète de la perte $L$.
+    \item Une implémentation Python de validation.
+\end{enumerate}
+
+% ============================================================
+%  SECTION 1 : FORWARD PASS
+% ============================================================
+\section{Propagation Avant (\textit{Forward Pass})}
+
+\subsection{Dimensionnement}
+
+On considère une convolution avec un \textbf{pas (\textit{stride}) de 1} et sans
+\textbf{remplissage (\textit{padding})}. Les dimensions sont :
+
+\begin{table}[H]
+    \centering
+    \caption{Dimensions des tenseurs de la convolution}
+    \label{tab:dims}
+    \renewcommand{\arraystretch}{1.4}
+    \begin{tabular}{lccc}
+        \toprule
+        \rowcolor{espblue!15}
+        \textbf{Tenseur} & \textbf{Notation} & \textbf{Taille} & \textbf{Rôle} \\
+        \midrule
+        Entrée   & $X$ & $3 \times 3$ & Image d'entrée \\
+        Filtre   & $F$ & $2 \times 2$ & Noyau de convolution \\
+        Sortie   & $O$ & $2 \times 2$ & Carte de caractéristiques \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+\subsection{Visualisation de l'Opération}
+
+\begin{figure}[H]
+\centering
+\begin{tikzpicture}[
+    cell/.style={draw=espblue!50, minimum size=0.85cm, font=\small},
+    highlight/.style={draw=espblue, fill=cellblue, minimum size=0.85cm, font=\small\bfseries},
+    filter/.style={draw=espgold, fill=cellgold, minimum size=0.85cm, font=\small\bfseries},
+    out/.style={draw=codegreen!60!black, fill=cellgreen, minimum size=0.85cm, font=\small\bfseries},
+]
+    % --- Matrice X ---
+    \node[font=\small\bfseries\color{espblue}] at (1.3, 3.2) {Entrée $X$ ($3\times3$)};
+    \node[highlight] at (0.0, 2.55) {$X_{11}$};
+    \node[highlight] at (0.85,2.55) {$X_{12}$};
+    \node[cell]      at (1.70,2.55) {$X_{13}$};
+    \node[highlight] at (0.0, 1.70) {$X_{21}$};
+    \node[highlight] at (0.85,1.70) {$X_{22}$};
+    \node[cell]      at (1.70,1.70) {$X_{23}$};
+    \node[cell]      at (0.0, 0.85) {$X_{31}$};
+    \node[cell]      at (0.85,0.85) {$X_{32}$};
+    \node[cell]      at (1.70,0.85) {$X_{33}$};
+
+    % --- Signe * ---
+    \node[font=\LARGE\bfseries\color{espblue}] at (2.9, 1.70) {$*$};
+
+    % --- Filtre F ---
+    \node[font=\small\bfseries\color{espgold}] at (4.25, 3.2) {Filtre $F$ ($2\times2$)};
+    \node[filter] at (3.60, 2.55) {$F_{11}$};
+    \node[filter] at (4.45, 2.55) {$F_{12}$};
+    \node[filter] at (3.60, 1.70) {$F_{21}$};
+    \node[filter] at (4.45, 1.70) {$F_{22}$};
+
+    % --- Signe = ---
+    \node[font=\LARGE\bfseries\color{espblue}] at (5.65, 1.70) {$=$};
+
+    % --- Sortie O ---
+    \node[font=\small\bfseries\color{codegreen!60!black}] at (7.15, 3.2) {Sortie $O$ ($2\times2$)};
+    \node[out] at (6.60, 2.55) {$O_{11}$};
+    \node[out] at (7.45, 2.55) {$O_{12}$};
+    \node[out] at (6.60, 1.70) {$O_{21}$};
+    \node[out] at (7.45, 1.70) {$O_{22}$};
+\end{tikzpicture}
+\caption{Schéma de la convolution $3\times3 * 2\times2 \to 2\times2$. Les cellules bleues
+indiquent la position du filtre pour le calcul de $O_{11}$.}
+\label{fig:conv}
+\end{figure}
+
+\subsection{Équations de la Convolution}
+
+La formule générale est $O_{ij} = \sum_{p,q} X_{i+p,\,j+q} \cdot F_{pq}$.
+Développée pour chaque sortie :
+
+\begin{mathbox}
+\begin{align}
+    O_{11} &= X_{11}F_{11} + X_{12}F_{12} + X_{21}F_{21} + X_{22}F_{22} \label{eq:o11}\\
+    O_{12} &= X_{12}F_{11} + X_{13}F_{12} + X_{22}F_{21} + X_{23}F_{22} \label{eq:o12}\\
+    O_{21} &= X_{21}F_{11} + X_{22}F_{12} + X_{31}F_{21} + X_{32}F_{22} \label{eq:o21}\\
+    O_{22} &= X_{22}F_{11} + X_{23}F_{12} + X_{32}F_{21} + X_{33}F_{22} \label{eq:o22}
+\end{align}
+\end{mathbox}
+
+\begin{infobox}[title={Observation clé : le partage de poids}]
+Le \textbf{même filtre} $F$ est appliqué à chaque position. Chaque élément $F_{pq}$
+contribue aux \textbf{quatre sorties} $O_{11}, O_{12}, O_{21}, O_{22}$.
+C'est ce partage de poids qui donne aux CNN leur efficacité et leur invariance spatiale.
+\end{infobox}
+
+% ============================================================
+%  SECTION 2 : GRADIENTS LOCAUX
+% ============================================================
+\section{Calcul des Gradients Locaux}
+
+Le gradient local représente la sensibilité d'une sortie à une variation
+d'un paramètre donné (\textit{à la}  perte non encore intégrée).
+
+\subsection{Dérivées par rapport au Filtre $F$}
+
+En différenciant les équations~\eqref{eq:o11}--\eqref{eq:o22}, pour la sortie
+$O_{12}$ :
+
+\begin{stepbox}{Gradients locaux de $O_{12}$ par rapport à $F$}
+\begin{equation}
+    \frac{\partial O_{12}}{\partial F_{11}} = X_{12},\quad
+    \frac{\partial O_{12}}{\partial F_{12}} = X_{13},\quad
+    \frac{\partial O_{12}}{\partial F_{21}} = X_{22},\quad
+    \frac{\partial O_{12}}{\partial F_{22}} = X_{23}
+\end{equation}
+\textit{Interprétation :} le gradient local par rapport à $F_{pq}$ est simplement
+l'élément d'entrée $X$ qui était « sous » $F_{pq}$ lors du calcul de $O_{12}$.
+\end{stepbox}
+
+\subsection{Dérivées par rapport à l'Entrée $X$}
+
+Certaines entrées n'interviennent pas dans le calcul de sorties spécifiques.
+Pour $O_{12}$ :
+
+\begin{stepbox}{Gradients locaux de $O_{12}$ par rapport à $X$}
+\begin{equation}
+    \frac{\partial O_{12}}{\partial X_{11}} = 0,\quad
+    \frac{\partial O_{12}}{\partial X_{12}} = F_{11},\quad
+    \frac{\partial O_{12}}{\partial X_{22}} = F_{21}
+\end{equation}
+\textit{Interprétation :} $X_{11}$ n'apparaît pas dans $O_{12}$, d'où un gradient nul.
+\end{stepbox}
+
+% ============================================================
+%  SECTION 3 : RÉTROPROPAGATION
+% ============================================================
+\section{Gradients de la Fonction de Perte $L$}
+
+En appliquant la \textbf{règle de la chaîne}, on accumule les gradients sur
+toutes les sorties influencées par un paramètre donné.
+
+\subsection{Gradient par rapport au Filtre $\partial L / \partial F$}
+
+L'élément $F_{12}$ contribue aux quatre sorties. Son gradient total est :
+
+\begin{stepbox}{Gradient total de $L$ par rapport à $F_{12}$}
+\begin{equation}
+    \frac{\partial L}{\partial F_{12}}
+    = \frac{\partial L}{\partial O_{11}} \cdot X_{12}
+    + \frac{\partial L}{\partial O_{12}} \cdot X_{13}
+    + \frac{\partial L}{\partial O_{21}} \cdot X_{22}
+    + \frac{\partial L}{\partial O_{22}} \cdot X_{23}
+    \label{eq:grad_F12}
+\end{equation}
+\end{stepbox}
+
+\begin{propbox}
+\textbf{Propriété générale :}
+\[
+    \frac{\partial L}{\partial F} = \text{Convolution}\!\left(X,\;\frac{\partial L}{\partial O}\right)
+\]
+Le gradient par rapport au filtre est une \textbf{convolution} de l'entrée $X$
+par le gradient de sortie $\delta O = \partial L / \partial O$.
+\end{propbox}
+
+\subsection{Gradient par rapport à l'Entrée $\partial L / \partial X$}
+
+Le gradient dépend du nombre de fois que chaque élément de $X$ est « balayé »
+par le filtre.
+
+\begin{stepbox}{Cas $X_{11}$ : 1 seule contribution}
+\begin{equation}
+    \frac{\partial L}{\partial X_{11}}
+    = \frac{\partial L}{\partial O_{11}} \cdot F_{11}
+\end{equation}
+$X_{11}$ n'apparaît que dans $O_{11}$, donc une seule contribution.
+\end{stepbox}
+
+\vspace{0.4cm}
+
+\begin{stepbox}{Cas $X_{22}$ : 4 contributions (position centrale)}
+\begin{equation}
+    \frac{\partial L}{\partial X_{22}}
+    = \frac{\partial L}{\partial O_{11}} F_{22}
+    + \frac{\partial L}{\partial O_{12}} F_{21}
+    + \frac{\partial L}{\partial O_{21}} F_{12}
+    + \frac{\partial L}{\partial O_{22}} F_{11}
+    \label{eq:grad_x22}
+\end{equation}
+$X_{22}$ est présent dans les 4 positions de balayage du filtre.
+\end{stepbox}
+
+\begin{propbox}
+\textbf{Propriété générale :}
+\[
+    \frac{\partial L}{\partial X}
+    = \text{Convolution\_Pleine}\!\left(\frac{\partial L}{\partial O},\;F^{\text{rot180°}}\right)
+\]
+Le gradient par rapport à $X$ s'obtient par une \textbf{corrélation croisée}
+entre $\delta O$ et le filtre \textbf{retourné de 180°}.
+\end{propbox}
+
+\begin{table}[H]
+    \centering
+    \caption{Récapitulatif : nombre de contributions selon la position dans $X$}
+    \label{tab:contrib}
+    \renewcommand{\arraystretch}{1.5}
+    \begin{tabular}{ccc}
+        \toprule
+        \rowcolor{espblue!15}
+        \textbf{Élément de $X$} & \textbf{Contributions} & \textbf{Position} \\
+        \midrule
+        $X_{11}, X_{13}, X_{31}, X_{33}$ & 1 & Coins \\
+        $X_{12}, X_{21}, X_{23}, X_{32}$ & 2 & Bords \\
+        $X_{22}$                          & \cellcolor{codegreen!20}\textbf{4} & Centre \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+% ============================================================
+%  SECTION 4 : IMPLÉMENTATION PYTHON
+% ============================================================
+\section{Implémentation Logicielle}
+
+Le script suivant simule le calcul du gradient $\partial L / \partial F$
+pour une convolution $3 \times 3 \,*\, 2 \times 2$, puis valide le gradient
+$\partial L / \partial X$ par corrélation avec $F^{\text{rot180°}}$.
+
+\begin{lstlisting}[language=Python, caption={Calcul des gradients convolutifs -- NumPy}, label=lst:conv]
+import numpy as np
+
+# --- Tenseurs initiaux ---
+X     = np.array([[1, 2, 3],
+                  [4, 5, 6],
+                  [7, 8, 9]], dtype=float)
+
+F     = np.array([[1, 0],
+                  [0, 1]], dtype=float)
+
+dL_dO = np.ones((2, 2))  # Gradient hypothetique (uniforme)
+
+# =========================================================
+# 1. GRADIENT PAR RAPPORT AU FILTRE : dL/dF
+# =========================================================
+dL_dF = np.zeros_like(F)
+
+for p in range(2):
+    for q in range(2):
+        # Chaque element du filtre recoit la somme des contributions
+        dL_dF[p, q] = np.sum(X[p:p+2, q:q+2] * dL_dO)
+
+print("=== Gradient dL/dF (convolution) ===")
+print(dL_dF)
+
+# =========================================================
+# 2. GRADIENT PAR RAPPORT A L'ENTREE : dL/dX
+# =========================================================
+F_rot180 = np.rot90(F, 2)  # Rotation 180 degres du filtre
+
+# Padding complet de dL_dO pour la convolution "pleine"
+dL_dO_pad = np.pad(dL_dO, pad_width=1, mode='constant')
+dL_dX     = np.zeros_like(X)
+
+for i in range(3):
+    for j in range(3):
+        dL_dX[i, j] = np.sum(dL_dO_pad[i:i+2, j:j+2] * F_rot180)
+
+print("\n=== Gradient dL/dX (conv. pleine + filtre rot180) ===")
+print(dL_dX)
+\end{lstlisting}
+
+\begin{resultbox}
+\textbf{Résultat attendu pour \texttt{dL/dF}} (avec $\delta O = \mathbf{1}_{2\times2}$) :
+les valeurs correspondent à la somme des sous-matrices $2\times2$ de $X$
+(position coins, bords, centre), confirmant l'équation~\eqref{eq:grad_F12}.
+\end{resultbox}
+
+% ============================================================
+%  CONCLUSION
+% ============================================================
+\section*{Conclusion}
+\addcontentsline{toc}{section}{Conclusion}
+
+L'étude de la rétropropagation dans une couche de convolution révèle une
+\textbf{symétrie mathématique remarquable} :
+
+\begin{resultbox}
+\begin{itemize}[noitemsep, leftmargin=1.5cm]
+    \item \textbf{Gradient du filtre $F$} : convolution de l'entrée $X$
+          par le gradient de sortie $\delta O$.
+    \item \textbf{Gradient de l'entrée $X$} : corrélation croisée de $\delta O$
+          avec le filtre \textbf{retourné de 180°}.
+\end{itemize}
+Cette symétrie n'est pas un accident : elle découle directement de la structure
+de l'opération de convolution. Elle est exploitée par les bibliothèques de
+Deep Learning modernes (\textbf{PyTorch}, \textbf{TensorFlow}) pour optimiser
+les calculs sur GPU via des opérations \textsc{cuDNN} hautement parallélisées.
+\end{resultbox}
+
+\end{document}
